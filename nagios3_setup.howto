@@ -1,0 +1,126 @@
+The document describes how to setup and configure nagios3 monitoring server with custom check script.
+host0 - monitoring server
+host1 - monitored server
+
+On host0:
+====
+sudo apt-get install nagios3 nagios-nrpe-plugin
+
+# add the monitored host
+# host_name and address parameters must be changed
+sudo cp /etc/nagios3/conf.d/localhost_nagios2.cfg \
+/etc/nagios3/conf.d/host1.cfg
+
+diff -u /etc/nagios3/conf.d/localhost_nagios2.cfg /etc/nagios3/conf.d/host1.cfg
+~~~~
+--- /etc/nagios3/conf.d/localhost_nagios2.cfg   2011-07-29 13:56:08.000000000 +0000
++++ /etc/nagios3/conf.d/host1.cfg       2016-04-26 19:41:15.942632999 +0000
+@@ -6,9 +6,9 @@
+ 
+ define host{
+         use                     generic-host            ; Name of host template to use
+-        host_name               localhost
+-        alias                   localhost
+-        address                 127.0.0.1
++        host_name               ip-172-31-28-224
++        alias                   host1 server
++        address                 172.31.28.224
+         }
+ 
+ # Define a service to check the disk space of the root partition
+@@ -17,7 +17,7 @@
+ 
+ define service{
+         use                             generic-service         ; Name of service template to use
+-        host_name                       localhost
++        host_name                       ip-172-31-28-224
+         service_description             Disk Space
+         check_command                   check_all_disks!20%!10%
+         }
+@@ -30,7 +30,7 @@
+ 
+ define service{
+         use                             generic-service         ; Name of service template to use
+-        host_name                       localhost
++        host_name                       ip-172-31-28-224
+         service_description             Current Users
+         check_command                   check_users!20!50
+         }
+@@ -42,7 +42,7 @@
+ 
+ define service{
+         use                             generic-service         ; Name of service template to use
+-        host_name                       localhost
++        host_name                       ip-172-31-28-224
+         service_description             Total Processes
+                check_command                   check_procs!250!400
+         }
+@@ -53,7 +53,7 @@
+ 
+ define service{
+         use                             generic-service         ; Name of service template to use
+-        host_name                       localhost
++        host_name                       ip-172-31-28-224
+         service_description             Current Load
+                check_command                   check_load!5.0!4.0!3.0!10.0!6.0!4.0
+         }
+~~~~
+
+# add the custom command
+sudo vim /etc/nagios3/commands.cfg
++define command{
++        command_name    check_apache2
++        command_line    $USER1$/check_nrpe -H $HOSTADDRESS$ -c check_apache2 -t 30
++        }
+
+# adding the corresponding lines in host1.cnf
+sudo vim /etc/nagios3/conf.d/host1.cfg
++define service {
++        use                             generic-service
++        host_name                       ip-172-31-28-224
++        service_description             Custom Apache2 Checker
++        check_command                   check_apache2
++        }
+
+# to apply the changes
+sudo service nagios3 restart
+
+# Some useful tips:
+# nrpe server is listening on 5666, to check the availability 
+/usr/lib/nagios/plugins/check_nrpe -H <IP>
+
+# to add a user
+sudo htpasswd /etc/nagios3/htpasswd.users user
+
+# use the following config file to tune generic-service parameters (like monitoring intervals and etc):
+/etc/nagios3/conf.d/generic-service_nagios2.cfg
+====
+
+On host1:
+====
+sudo apt install nagios-nrpe-server
+
+# adding nagios3 server's IP to the whitelist
+sudo vim /etc/nagios/nrpe.cfg
+~~~~
+-allowed_hosts=127.0.0.1
++allowed_hosts=127.0.0.1,172.31.21.176
+~~~~
+
+# copying custom check script
+scp ./check_apache2.pl /usr/lib/nagios/plugins/check_apache2.pl
+sudo chmod +x /usr/lib/nagios/plugins/check_apache2.pl
+
+# add custom command on nrpe-server side:
+sudo vim /etc/nagios/nrpe.cfg
++command[check_apache2]=/usr/lib/nagios/plugins/check_apache2.pl
+
+# to apply the change
+sudo service nagios-nrpe-server restart
+====
+
+Custom script exit codes:
+0 -> OK
+1 -> WARNING
+2 -> CRITICAL
+3 -> UNKNOWN
