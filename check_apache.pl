@@ -13,8 +13,8 @@ my $status_file = "/home/ubuntu/check_status/.status_file";
 my $ticket_info = "/home/ubuntu/check_status/.ticket_info";
 
 # Jira API auth details
-my $username = <username>;
-my $password = <password>;
+my $username = '<username>';
+my $password = '<password>';
 my $headers = {Accept => 'application/json', Authorization => 'Basic ' . encode_base64($username . ':' . $password)};
 my $client = REST::Client->new();
 $client->setHost('<url>');
@@ -71,7 +71,7 @@ given ($check_apache) {
     	print "OK - apache2 service is UP.";
     	unless (check_status()) {
     		set_status(0);
-    		jira_issue("close");
+    		eval { jira_issue("close") };
     	}
         # exit code is 0, apache2 status is OK
     	exit(0);
@@ -80,7 +80,7 @@ given ($check_apache) {
     	print "CRITICAL - apache2 service is DOWN";
     	if (check_status()) {
     		set_status(1);
-    		jira_issue("open");
+    		eval { jira_issue("open") };
     	}
         # exit code is 2, apache2 status is CRITICAL
     	exit(2);
