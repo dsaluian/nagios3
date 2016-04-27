@@ -52,7 +52,7 @@ sub jira_issue {
                 issuetype   => { name => "Bug" },
                 project     => { key => "TEST" } } };
         my $json = to_json $issue;
-        $client->POST('rest/api/2/issue/', $json, \%$headers);
+        $client->POST('rest/api/2/issue/', $json, { "Content-type" => 'application/json'}, \%$headers);
         my $response = from_json($client->responseContent());
 	open my $file, '+>', $ticket_info or die;
         print $file $response;
