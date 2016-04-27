@@ -54,7 +54,7 @@ sub jira_issue {
         my $json = to_json $issue;
         $client->POST('rest/api/2/issue/', $json, \%$headers);
         my $response = from_json($client->responseContent());
-		open my $file, '+>', $ticket_info or die;
+	open my $file, '+>', $ticket_info or die;
         print $file $response;
         close $file;
 	}
