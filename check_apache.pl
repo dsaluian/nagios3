@@ -13,11 +13,11 @@ my $status_file = "/home/ubuntu/check_status/.status_file";
 my $ticket_info = "/home/ubuntu/check_status/.ticket_info";
 
 # Jira API auth details
-my $username = 'nagios';
-my $password = 'passwd_nagios';
+my $username = <username>;
+my $password = <password>;
 my $headers = {Accept => 'application/json', Authorization => 'Basic ' . encode_base64($username . ':' . $password)};
 my $client = REST::Client->new();
-$client->setHost('http://52.37.102.184:8080');
+$client->setHost('<url>');
 
 # command to check apache2 service status
 my $check_apache = `service apache2 status \|awk '{print \$4}'`;
